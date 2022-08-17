@@ -187,4 +187,4 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
 
     plt.show()
 
-    return (start_stock)
+    return(dict(start_stock=start_stock, result_list=result_list, lagrange_list=lagrange_list))
