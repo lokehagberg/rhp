@@ -23,8 +23,6 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
     for T in range(steps_horizon):
         final_production_matrix_list.append(np.matmul(depreciation_matrix_list[T + 1], (
                     augmented_supply_list[T] - (augmented_use_domestic_list[T] + augmented_use_imported_list[T]))))
-
-    previous_stock = np.matrix([[0] for i in range(augmented_target_output_list[0].shape[0])])
     
     for T in range(time_steps):
 
@@ -87,8 +85,7 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
 
         # Constructing v
 
-        v = deepcopy(np.matmul(depreciation_matrix_list[T + 1], augmented_target_output_list[T]) - np.matmul(
-            depreciation_matrix_list[T], previous_stock))
+        v = deepcopy(np.matmul(depreciation_matrix_list[T + 1], augmented_target_output_list[T]))
         for i in range(planning_horizon - 1):
             w = deepcopy(np.concatenate((v, (
                 np.asarray(np.matmul(depreciation_matrix_list[i + 2], augmented_target_output_list[i + 1]) + v[i])))))
@@ -110,7 +107,6 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
         lagrange_list.append(lagrange_ineq)
 
         x = deepcopy(np.array_split(result_list[T], planning_horizon))
-        previous_stock = deepcopy(np.matrix(np.matmul(final_production_matrix_list[T], x[0])).reshape([-1, 1]))
 
         target_output_aggregated_list.append(target_output_aggregated[:-1])
 
@@ -189,4 +185,4 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
 
     plt.show()
 
-    return(dict(previous_stock=previous_stock, result_list=result_list, lagrange_list=lagrange_list))
+    return(dict(result_list=result_list, lagrange_list=lagrange_list))
