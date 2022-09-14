@@ -12,7 +12,7 @@ A first example with Swedish national accounts data is given [here](example.ipyn
 
 ## Python implementation
 
-The goal is to coordinate $m$ units of production, so that their production levels utilize the minimal amount of resources required to meet material constraints over future planning period of $N$ periods. This coordination process is revised at every time step. 
+The goal is to coordinate $m$ units of production, so that their production levels utilize the minimal amount of resources required to meet material constraints over a future time horizon. This coordination process is revised at every time step. 
 
 ### Variables
 
