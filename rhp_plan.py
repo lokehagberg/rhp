@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import numpy as np
 from copy import deepcopy
 from scipy import optimize
@@ -11,7 +9,7 @@ def zdivide(x, y):
 
 def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_domestic_list, augmented_use_imported_list,
          depreciation_matrix_list, augmented_target_output_list, augmented_export_vector_list, export_prices_list,
-         import_prices_list, sector_name, sector_with_all_outputs, worked_hours):
+         import_prices_list):
     result_list = []
     lagrange_list = []
     target_output_aggregated_list = []
@@ -110,79 +108,4 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
 
         target_output_aggregated_list.append(target_output_aggregated[:-1])
 
-    # plan details
-    overshoot = []
-    for T in range(time_steps):
-
-        x = np.array_split(result_list[T], planning_horizon)
-
-        l = np.array_split(lagrange_list[T], planning_horizon)
-
-        y = []
-        for i in range(planning_horizon):
-            y.append(np.transpose(np.squeeze(np.array(np.matmul(final_production_matrix_list[T + i], x[i])))))
-
-        tout_planning_period = np.array_split(target_output_aggregated_list[T], planning_horizon)
-        for i in range(planning_horizon):
-            overshoot.append((zdivide(y[i], np.squeeze(np.asarray(tout_planning_period[i])))) - 1)
-
-    # Displaying results of all plans in order
-
-    plt.style.use('_mpl-gallery')
-    fig = plt.figure(figsize=(30, 180))
-    fig.suptitle('Results', fontsize=32)
-    gs = gridspec.GridSpec(5 * time_steps * planning_horizon, 1)
-
-    sector_with_all_outputs_and_EXP = deepcopy(sector_with_all_outputs)
-    sector_with_all_outputs_and_EXP.append('EXP')
-
-    labels = ['overshoot_target_output_quotient',
-              'Worked hours (10K)',
-              'Worked hours (10K) percentage',
-              'Produced total period minus consumed total',
-              'Lagrange multiplier']
-
-    for i in range(time_steps):
-        ax = fig.add_subplot(gs[i * 5 + 1, 0])
-        ax.set_xlabel('Product', fontsize=14)
-        ax.set_ylabel(labels[0], fontsize=14)
-        ax.set_xticks(range(final_production_matrix_list[i].shape[0]), sector_with_all_outputs)
-        for j in range(planning_horizon):
-            ax.plot(range(final_production_matrix_list[j].shape[0]), overshoot[j])
-
-        ax = fig.add_subplot(gs[i * 5 + 2, 0])
-        ax.set_xlabel('Product', fontsize=14)
-        ax.set_ylabel(labels[1], fontsize=14)
-        ax.set_xticks(range(final_production_matrix_list[i].shape[1]), sector_name)
-        for j in range(planning_horizon):
-            x = np.array_split(result_list[i], planning_horizon)
-            ax.plot(range(x[j].shape[0]), x[j])
-
-        ax = fig.add_subplot(gs[i * 5 + 3, 0])
-        ax.set_xlabel('Product', fontsize=14)
-        ax.set_ylabel(labels[2], fontsize=14)
-        ax.set_xticks(range(final_production_matrix_list[i].shape[1]), sector_name)
-        for j in range(planning_horizon):
-            x = np.array_split(result_list[i], planning_horizon)
-            ax.plot(range(x[j].shape[0]), x[j] / worked_hours)
-
-        ax = fig.add_subplot(gs[i * 5 + 4, 0])
-        ax.set_xlabel('Product', fontsize=14)
-        ax.set_ylabel(labels[3], fontsize=14)
-        ax.set_xticks(range(len(sector_with_all_outputs)), sector_with_all_outputs)
-        total_overshoot = 0.0
-        for j in range(planning_horizon):
-            total_overshoot += overshoot[j]
-        ax.plot(range(final_production_matrix_list[i].shape[0]), total_overshoot)
-
-        ax = fig.add_subplot(gs[i * 5 + 5, 0])
-        ax.set_xlabel('Product', fontsize=14)
-        ax.set_ylabel(labels[4], fontsize=14)
-        ax.set_xticks(range(len(sector_with_all_outputs_and_EXP)), sector_with_all_outputs_and_EXP)
-        for j in range(planning_horizon):
-            l = np.array_split(lagrange_list[i], planning_horizon)
-            ax.plot(range(l[j].shape[0]), l[j])
-
-    plt.show()
-
-    return(dict(result_list=result_list, lagrange_list=lagrange_list))
+    return([result_list, lagrange_list, target_output_aggregated_list])
