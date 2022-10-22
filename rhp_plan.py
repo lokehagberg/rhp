@@ -7,9 +7,8 @@ def zdivide(x, y):
     return np.divide(x, y, out=np.zeros_like(x), where=y!=0)
 
 
-def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_domestic_list, augmented_use_imported_list,
-         depreciation_matrix_list, augmented_target_output_list, augmented_export_vector_list, export_prices_list,
-         import_prices_list):
+def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_list, augmented_use_domestic_list, augmented_use_imported_list,
+         depreciation_matrix_list, augmented_target_output_list, augmented_export_vector_list, export_prices_list, import_prices_list):
     result_list = []
     lagrange_list = []
     target_output_aggregated_list = []
@@ -78,9 +77,6 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
 
         production_aggregated = np.concatenate((production_aggregated_primitive, -augmented_import_cost_matrix), axis=0)
 
-        # Constructing the one_vector
-        aug_one_vector = np.array([[1] for i in range(production_aggregated.shape[1])])
-
         # Constructing v
 
         v = deepcopy(np.matmul(depreciation_matrix_list[T + 1], augmented_target_output_list[T]))
@@ -93,19 +89,17 @@ def plan(time_steps, planning_horizon, augmented_supply_list, augmented_use_dome
 
         # plan
 
-        result = optimize.linprog(aug_one_vector, A_ub=-production_aggregated, b_ub=-target_output_aggregated,
+        result = optimize.linprog(primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
         lagrange_ineq = - \
-        optimize.linprog(aug_one_vector, A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
+        optimize.linprog(primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
                          method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
-
-        x = deepcopy(np.array_split(result_list[T], planning_horizon))
-
+        
         target_output_aggregated_list.append(target_output_aggregated[:-1])
 
     return([result_list, lagrange_list, target_output_aggregated_list])
