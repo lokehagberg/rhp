@@ -7,11 +7,11 @@ def zdivide(x, y):
     return np.divide(x, y, out=np.zeros_like(x), where=y!=0)
 
 
-def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_list, augmented_use_domestic_list, augmented_use_imported_list,
-         depreciation_matrix_list, augmented_target_output_list, augmented_export_vector_list, export_prices_list, import_prices_list):
-    result_list = []
-    lagrange_list = []
-    target_output_aggregated_list = []
+def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_list, augmented_use_domestic_list, 
+         augmented_use_imported_list, depreciation_matrix_list, augmented_target_output_list, augmented_export_vector_list, 
+         export_prices_list, import_prices_list):
+    
+    result_list, lagrange_list,target_output_aggregated_list = [], [], []
 
     steps_horizon = time_steps + planning_horizon
 
