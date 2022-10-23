@@ -86,12 +86,10 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
             v = deepcopy(w)
 
         target_output_aggregated = np.concatenate((v, [-export_value_list[T]]))
-        
-        primary_resource_vector = deepcopy(primary_resource_list[T])
 
         # plan
 
-        result = optimize.linprog(c=primary_resource_vector, A_ub=-production_aggregated, b_ub=-target_output_aggregated,
+        result = optimize.linprog(c=primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
@@ -104,4 +102,4 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
         
         target_output_aggregated_list.append(target_output_aggregated[:-1])
 
-    return([result_list, lagrange_list, target_output_aggregated_list])
+    return([result_list, lagrange_list])
