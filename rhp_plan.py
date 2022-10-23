@@ -15,7 +15,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
 
     steps_horizon = time_steps + planning_horizon
 
-    # final production matrices D(B - (A' + A''))
+    # Final production matrices D(B - (A' + A''))
     final_production_matrix_list = []
     for T in range(steps_horizon):
         final_production_matrix_list.append(np.matmul(depreciation_matrix_list[T + 1], (
@@ -44,7 +44,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
                 exp_val += export_prices_list[i][j] * augmented_export_vector_list[i][j]
             export_value_list.append(exp_val)
 
-        # Constructing M
+        # Constructing a list of DJ
 
         def concatenator_3(arr, T, planning_horizon):
             zero_matrix = np.matrix(np.zeros_like(np.asarray(arr[0])))
@@ -77,7 +77,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
 
         production_aggregated = np.concatenate((production_aggregated_primitive, -augmented_import_cost_matrix), axis=0)
 
-        # Constructing v
+        # Constructing a list of Dr
 
         v = deepcopy(np.matmul(depreciation_matrix_list[T + 1], augmented_target_output_list[T]))
         for i in range(planning_horizon - 1):
@@ -87,7 +87,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
 
         target_output_aggregated = np.concatenate((v, [-export_value_list[T]]))
 
-        # plan
+        # Plan
 
         result = optimize.linprog(c=primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated,
                                   bounds=(0, None), method='highs-ipm')
