@@ -95,7 +95,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
         print(result.success)
         print(result.status)
         lagrange_ineq = - \
-        optimize.linprog(primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
+        optimize.linprog(c=primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
                          method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
