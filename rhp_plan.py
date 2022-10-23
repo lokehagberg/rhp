@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 from scipy import optimize
 
+#See the rhp_intro.pdf for an explanation of the comments
 
 def zdivide(x, y):
     return np.divide(x, y, out=np.zeros_like(x), where=y!=0)
@@ -15,7 +16,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
 
     steps_horizon = time_steps + planning_horizon
 
-    # Final production matrices D(B - (A' + A''))
+    # Final production matrices DJ
     final_production_matrix_list = []
     for T in range(steps_horizon):
         final_production_matrix_list.append(np.matmul(depreciation_matrix_list[T + 1], (
