@@ -8,9 +8,8 @@ def zdivide(x, y):
     return np.divide(x, y, out=np.zeros_like(x), where=y!=0)
 
 
-def plan(time_steps, planning_horizon, primary_resource_list, supply_list, use_domestic_list, 
-         use_imported_list, depreciation_list, target_output_list, export_vector_list, 
-         export_prices_list, import_prices_list):
+def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, use_imported_list, depreciation_list, 
+         target_output_list, export_vector_list, export_prices_list, import_prices_list):
     
     result_list, lagrange_list, slack_list = [], [], []
     steps_horizon = time_steps + planning_horizon
@@ -18,8 +17,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_list, use_d
     # Final production matrices list with elements DJ
     final_production_matrix_list = []
     for i in range(steps_horizon):
-        final_production_matrix_list.append(np.matmul(depreciation_list[i + 1], (
-                    supply_list[i] - (use_domestic_list[i] + use_imported_list[i]))))
+        final_production_matrix_list.append(np.matmul(depreciation_list[i + 1], supply_use_list[i]))
     
     for T in range(time_steps):
 
@@ -84,14 +82,21 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_list, use_d
 
         target_output_aggregated = np.concatenate((v, -export_value_list[T]))
 
+        # Constructing c
+        
+        c = deepcopy(primary_resource_list[T])
+        for i in range(planning_horizon - 1):
+            c_2 = deepcopy(np.concatenate((c, primary_resource_list[i + 1])))
+            c = deepcopy(c_2)
+        
         # Plan
 
-        result = optimize.linprog(c=primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated,
+        result = optimize.linprog(c=c, A_ub=-target_output_aggregated, b_ub=-production_aggregated,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
         lagrange_ineq = - \
-        optimize.linprog(c=primary_resource_list[T], A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
+        optimize.linprog(c=c, A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
                          method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
