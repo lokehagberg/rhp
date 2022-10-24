@@ -8,28 +8,27 @@ def zdivide(x, y):
     return np.divide(x, y, out=np.zeros_like(x), where=y!=0)
 
 
-def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_list, augmented_use_domestic_list, 
-         augmented_use_imported_list, depreciation_matrix_list, augmented_target_output_list, augmented_export_vector_list, 
+def plan(time_steps, planning_horizon, primary_resource_list, supply_list, use_domestic_list, 
+         use_imported_list, depreciation_list, target_output_list, export_vector_list, 
          export_prices_list, import_prices_list):
     
-    result_list, lagrange_list,target_output_aggregated_list = [], [], []
-
+    result_list, lagrange_list, slack_list = [], [], []
     steps_horizon = time_steps + planning_horizon
 
-    # Final production matrices DJ
+    # Final production matrices list with elements DJ
     final_production_matrix_list = []
-    for T in range(steps_horizon):
-        final_production_matrix_list.append(np.matmul(depreciation_matrix_list[T + 1], (
-                    augmented_supply_list[T] - (augmented_use_domestic_list[T] + augmented_use_imported_list[T]))))
+    for i in range(steps_horizon):
+        final_production_matrix_list.append(np.matmul(depreciation_list[i + 1], (
+                    supply_list[i] - (use_domestic_list[i] + use_imported_list[i]))))
     
     for T in range(time_steps):
 
         # Export constraints
 
-        import_cost_matrix = deepcopy(augmented_use_imported_list[T])
-        for i in range(augmented_use_imported_list[T].shape[0]):
-            for j in range(augmented_use_imported_list[T].shape[1]):
-                import_cost_matrix[i, j] = augmented_use_imported_list[T][i, j] * import_prices_list[T][i][0]
+        import_cost_matrix = deepcopy(use_imported_list[T])
+        for i in range(use_imported_list[T].shape[0]):
+            for j in range(use_imported_list[T].shape[1]):
+                import_cost_matrix[i, j] = use_imported_list[T][i, j] * import_prices_list[T][i][0]
 
         import_cost_list = deepcopy([import_cost_matrix])
         for i in range(planning_horizon - 1):
@@ -42,7 +41,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
         for i in range(time_steps):
             exp_val = 0
             for j in range(len(export_prices_list[i])):
-                exp_val += export_prices_list[i][j] * augmented_export_vector_list[i][j]
+                exp_val += export_prices_list[i][j] * export_vector_list[i][j]
             export_value_list.append(exp_val)
 
         # Constructing a list of DJ
@@ -80,10 +79,10 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
 
         # Constructing a list of Dr
 
-        v = deepcopy(np.matmul(depreciation_matrix_list[T + 1], augmented_target_output_list[T]))
+        v = deepcopy(np.matmul(depreciation_list[T + 1], target_output_list[T]))
         for i in range(planning_horizon - 1):
             w = deepcopy(np.concatenate((v, (
-                np.asarray(np.matmul(depreciation_matrix_list[i + 2], augmented_target_output_list[i + 1]) + v[i])))))
+                np.asarray(np.matmul(depreciation_list[i + 2], target_output_list[i + 1]) + v[i])))))
             v = deepcopy(w)
 
         target_output_aggregated = np.concatenate((v, [-export_value_list[T]]))
@@ -100,7 +99,6 @@ def plan(time_steps, planning_horizon, primary_resource_list, augmented_supply_l
 
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
-        
-        target_output_aggregated_list.append(target_output_aggregated[:-1])
+        slack_list.append(result.slack)
 
-    return([result_list, lagrange_list])
+    return([result_list, lagrange_list, slack_list])
