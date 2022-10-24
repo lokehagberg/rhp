@@ -92,7 +92,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         
         # Plan
         
-        result = optimize.linprog(c=primary_resource, A_ub=-target_output_aggregated, b_ub=-production_aggregated,
+        result = optimize.linprog(c=primary_resource, A_ub=-production_aggregated, b_ub=-target_output_aggregated,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
