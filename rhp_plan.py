@@ -39,10 +39,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_list, use_d
 
         export_value_list = []
         for i in range(time_steps):
-            exp_val = 0
-            for j in range(len(export_prices_list[i])):
-                exp_val += export_prices_list[i][j] * export_vector_list[i][j]
-            export_value_list.append(exp_val)
+            export_value_list.append(np.dot(export_prices_list[i].reshape([1,-1]), export_vector_list[i]))
 
         # Constructing a list of DJ
 
@@ -85,7 +82,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_list, use_d
                 np.asarray(np.matmul(depreciation_list[i + 2], target_output_list[i + 1]) + v[i])))))
             v = deepcopy(w)
 
-        target_output_aggregated = np.concatenate((v, [-export_value_list[T]]))
+        target_output_aggregated = np.concatenate((v, -export_value_list[T]))
 
         # Plan
 
