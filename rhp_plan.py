@@ -86,17 +86,18 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         
         c = deepcopy(primary_resource_list[T])
         for i in range(planning_horizon - 1):
-            c_2 = deepcopy(np.concatenate((c, primary_resource_list[i + 1])))
+            c_2 = deepcopy(np.vstack((c,primary_resource_list[T])))
             c = deepcopy(c_2)
+        primary_resource = deepcopy(c)
         
         # Plan
-
-        result = optimize.linprog(c=c, A_ub=-target_output_aggregated, b_ub=-production_aggregated,
+        
+        result = optimize.linprog(c=primary_resource, A_ub=-target_output_aggregated, b_ub=-production_aggregated,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
         lagrange_ineq = - \
-        optimize.linprog(c=c, A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
+        optimize.linprog(c=primary_resource, A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
                          method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
