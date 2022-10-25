@@ -2,31 +2,63 @@ import numpy as np
 from copy import deepcopy
 from scipy import optimize
 
+
 #See the rhp_intro.pdf for an explanation of the comments
 
-def zdivide(x, y):
-    return np.divide(x, y, out=np.zeros_like(x), where=y!=0)
+
+#Horizontal stack algorithm
+def stack_horizontal(x, y, z):
+    w = deepcopy(x[z])
+    for i in range(y):
+        w = deepcopy(np.hstack((w, x[z + i + 1])))
+    return(w)
 
 
+#Vertical stack algorithm
+def stack_vertical(x, y, z):
+    w = deepcopy(x[z])
+    for i in range(y):
+        w = deepcopy(np.vstack((w, x[z + i + 1])))
+    return(w)
+
+
+#Supply use aggregating algorithm
+def concatenator(depreciation_list, supply_use_list, planning_horizon, T):
+    DJ_list = []
+    zero_list = [] 
+    for i in range(planning_horizon): 
+        zero_list.append(np.matrix(np.zeros_like(np.asarray(supply_use_list[T+i]))))
+    for i in range(planning_horizon):
+        DJ_list.append(supply_use_list[T + i])
+        row = deepcopy(stack_horizontal(DJ_list, i, T))
+        if planning_horizon - i - 1 > 0:
+            zero_row = deepcopy(stack_horizontal(zero_list, planning_horizon - i - 2, T))
+            full_row = deepcopy(np.hstack((row, zero_row)))
+        else:
+            full_row = deepcopy(row)
+        if i == 0: 
+            DJ_aggregated = deepcopy(full_row)
+        else:   
+            for j in range(len(DJ_list)):
+                DJ_list[j] = deepcopy(np.matmul(depreciation_list[T + 1 + i], DJ_list[j]))
+            DJ_aggregated = deepcopy(np.vstack((DJ_aggregated, full_row)))
+    return(DJ_aggregated)
+
+
+#The plan function
 def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, use_imported_list, depreciation_list, 
          target_output_list, export_vector_list, export_prices_list, import_prices_list):
     
     result_list, lagrange_list, slack_list = [], [], []
-    steps_horizon = time_steps + planning_horizon
 
-    # Final production matrices list with elements DJ
-    final_production_matrix_list = []
-    for i in range(steps_horizon):
-        final_production_matrix_list.append(np.matmul(depreciation_list[i + 1], supply_use_list[i]))
-    
     for T in range(time_steps):
 
         # Export constraints
-
+        
         import_cost_matrix = deepcopy(use_imported_list[T])
         for i in range(use_imported_list[T].shape[0]):
             for j in range(use_imported_list[T].shape[1]):
-                import_cost_matrix[i, j] = use_imported_list[T][i, j] * import_prices_list[T][i][0]
+                import_cost_matrix[i, j] = use_imported_list[T][i, j] * import_prices_list[T][i, 0]
 
         import_cost_list = deepcopy([import_cost_matrix])
         for i in range(planning_horizon - 1):
@@ -39,66 +71,29 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         for i in range(time_steps):
             export_value_list.append(np.dot(export_prices_list[i].reshape([1,-1]), export_vector_list[i]))
 
-        # Constructing a list of DJ
-
-        def concatenator_3(arr, T, planning_horizon):
-            zero_matrix = np.matrix(np.zeros_like(np.asarray(arr[0])))
-            block_row_list = []
-
-            for i in range(planning_horizon):
-                bottom_triangle_list = deepcopy([arr[T]])
-                top_triangle_list = deepcopy([zero_matrix])
-                for j in range(i):
-                    bottom = deepcopy(np.concatenate((bottom_triangle_list[0], arr[T + j]), axis=1))
-                    bottom_triangle_list[0] = deepcopy(bottom)
-                for j in range(planning_horizon - (i + 2)):
-                    triangle = deepcopy(np.concatenate((top_triangle_list[0], zero_matrix), axis=1))
-                    top_triangle_list[0] = deepcopy(triangle)
-                if i != planning_horizon - 1:
-                    block_row_list.append(np.concatenate((bottom_triangle_list[0], top_triangle_list[0]), axis=1))
-                else:
-                    block_row_list.append(bottom_triangle_list[0])
-
-            if (len(block_row_list) > 1):
-                for i in range(len(block_row_list) - 1):
-                    result = deepcopy(np.concatenate((block_row_list[i], block_row_list[i + 1]), axis=0))
-                    block_row_list[i + 1] = deepcopy(result)
-                return (result)
-            else:
-                return (block_row_list[0])
-
-        production_aggregated_primitive = concatenator_3(arr=final_production_matrix_list, T=T,
-                                                         planning_horizon=planning_horizon)
-
-        production_aggregated = np.concatenate((production_aggregated_primitive, -augmented_import_cost_matrix), axis=0)
-
-        # Constructing a list of Dr
-
-        v = deepcopy(np.matmul(depreciation_list[T + 1], target_output_list[T]))
-        for i in range(planning_horizon - 1):
-            w = deepcopy(np.concatenate((v, (
-                np.asarray(np.matmul(depreciation_list[i + 2], target_output_list[i + 1]) + v[i])))))
-            v = deepcopy(w)
-
-        target_output_aggregated = np.concatenate((v, -export_value_list[T]))
-
-        # Constructing c
+        # Constructing DJ aggregated
+        DJ_aggregated = np.vstack((concatenator(depreciation_list, supply_use_list, planning_horizon, T), 
+                                   -augmented_import_cost_matrix))
         
-        c = deepcopy(primary_resource_list[T])
+        # Constructing Dr aggregated
+        depreciated_target_output_list = [target_output_list[T]]
         for i in range(planning_horizon - 1):
-            c_2 = deepcopy(np.vstack((c,primary_resource_list[T])))
-            c = deepcopy(c_2)
-        primary_resource = deepcopy(c)
+            depreciated_target_output_list.append(
+                target_output_list[T + i + 1] + 
+                np.matmul(depreciation_list[T + i + 2], depreciated_target_output_list[i]))
+        Dr_aggregated = np.concatenate((stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0), 
+                                        -export_value_list[T]))
+
+        # Constructing c aggregated
+        c_aggregated = stack_vertical(primary_resource_list, planning_horizon - 1, T)
         
         # Plan
-        
-        result = optimize.linprog(c=primary_resource, A_ub=-production_aggregated, b_ub=-target_output_aggregated,
+        result = optimize.linprog(c=c_aggregated, A_ub=-DJ_aggregated, b_ub=-Dr_aggregated,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
-        lagrange_ineq = - \
-        optimize.linprog(c=primary_resource, A_ub=-production_aggregated, b_ub=-target_output_aggregated, bounds=(0, None),
-                         method='highs-ipm')['ineqlin']['marginals']
+        lagrange_ineq = -optimize.linprog(c=c_aggregated, A_ub=-DJ_aggregated, b_ub=-Dr_aggregated, bounds=(0, None),
+                                          method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
