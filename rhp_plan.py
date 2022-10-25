@@ -9,6 +9,7 @@ def stack_horizontal(x, y, z):
     w = deepcopy(x[z])
     for i in range(y):
         w = deepcopy(np.hstack((w, x[z + i + 1])))
+        
     return(w)
 
 #Vertical stack algorithm
@@ -16,6 +17,7 @@ def stack_vertical(x, y, z):
     w = deepcopy(x[z])
     for i in range(y):
         w = deepcopy(np.vstack((w, x[z + i + 1])))
+        
     return(w)
 
 #Supply-use aggregating algorithm
@@ -24,20 +26,26 @@ def concatenator(depreciation_list, supply_use_list, planning_horizon, T):
     zero_list = [] 
     for i in range(planning_horizon): 
         zero_list.append(np.matrix(np.zeros_like(np.asarray(supply_use_list[T+i]))))
+        
     for i in range(planning_horizon):
         DJ_list.append(supply_use_list[T+i])
         row = deepcopy(stack_horizontal(DJ_list, i, 0))
+        
         if planning_horizon - i - 1 > 0:
             zero_row = deepcopy(stack_horizontal(zero_list, planning_horizon - i - 2, 0))
             full_row = deepcopy(np.hstack((row, zero_row)))
+            
         else:
             full_row = deepcopy(row)
+            
         if i == 0: 
             DJ_aggregated = deepcopy(full_row)
+            
         else:   
             for j in range(len(DJ_list)):
                 DJ_list[j] = deepcopy(np.matmul(depreciation_list[T + 1 + i], DJ_list[j]))
             DJ_aggregated = deepcopy(np.vstack((DJ_aggregated, full_row)))
+            
     return(DJ_aggregated)
 
 #Plan function
@@ -53,10 +61,13 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         for i in range(use_imported_list[T].shape[0]):
             for j in range(use_imported_list[T].shape[1]):
                 import_cost_matrix[i, j] = use_imported_list[T][i, j] * import_prices_list[T][i, 0]
+                
         import_cost_list = deepcopy([import_cost_matrix])
+        
         for i in range(planning_horizon - 1):
             cost_list = deepcopy(np.concatenate((import_cost_list[0], import_cost_matrix), axis=1))
             import_cost_list[0] = deepcopy(cost_list)
+            
         augmented_import_cost_matrix = import_cost_list[0].sum(axis=0)
         export_value_list = []
         for i in range(time_steps):
@@ -72,6 +83,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             depreciated_target_output_list.append(
                 target_output_list[T + i + 1] + 
                 np.matmul(depreciation_list[T + i + 2], depreciated_target_output_list[i]))
+            
         Dr_aggregated = np.concatenate((stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0), 
                                         -export_value_list[T]))
 
