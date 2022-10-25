@@ -30,7 +30,7 @@ The goal is to coordinate $m$ units of production, so that their production leve
 | $p_{imp}$| import_prices_list           | import prices list                                    | list, each item in the list numpy.matrix & m*1 |
 |           | sector_name                  | ingoing product names                                 | list, each item in the list string & m         |
 |           | sector_with_all_outputs      | outgoing product names                                | list, each item in the list string & n         |
-|           | worked_hours                 | actual worked hours for the period                    | numpy.array & m                                |
+|           | worked_hours                 | actual worked hours for the period                    | numpy.matrix & m                                |
 
 
 
