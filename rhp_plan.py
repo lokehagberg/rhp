@@ -2,9 +2,7 @@ import numpy as np
 from copy import deepcopy
 from scipy import optimize
 
-
 #See the rhp_intro.pdf for an explanation of the comments
-
 
 #Horizontal stack algorithm
 def stack_horizontal(x, y, z):
@@ -13,7 +11,6 @@ def stack_horizontal(x, y, z):
         w = deepcopy(np.hstack((w, x[z + i + 1])))
     return(w)
 
-
 #Vertical stack algorithm
 def stack_vertical(x, y, z):
     w = deepcopy(x[z])
@@ -21,18 +18,17 @@ def stack_vertical(x, y, z):
         w = deepcopy(np.vstack((w, x[z + i + 1])))
     return(w)
 
-
-#Supply use aggregating algorithm
+#Supply-use aggregating algorithm
 def concatenator(depreciation_list, supply_use_list, planning_horizon, T):
     DJ_list = []
     zero_list = [] 
     for i in range(planning_horizon): 
         zero_list.append(np.matrix(np.zeros_like(np.asarray(supply_use_list[T+i]))))
     for i in range(planning_horizon):
-        DJ_list.append(supply_use_list[T + i])
-        row = deepcopy(stack_horizontal(DJ_list, i, T))
+        DJ_list.append(supply_use_list[T+i])
+        row = deepcopy(stack_horizontal(DJ_list, i, 0))
         if planning_horizon - i - 1 > 0:
-            zero_row = deepcopy(stack_horizontal(zero_list, planning_horizon - i - 2, T))
+            zero_row = deepcopy(stack_horizontal(zero_list, planning_horizon - i - 2, 0))
             full_row = deepcopy(np.hstack((row, zero_row)))
         else:
             full_row = deepcopy(row)
@@ -44,8 +40,7 @@ def concatenator(depreciation_list, supply_use_list, planning_horizon, T):
             DJ_aggregated = deepcopy(np.vstack((DJ_aggregated, full_row)))
     return(DJ_aggregated)
 
-
-#The plan function
+#Plan function
 def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, use_imported_list, depreciation_list, 
          target_output_list, export_vector_list, export_prices_list, import_prices_list):
     
