@@ -49,19 +49,15 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
     for T in range(time_steps):
 
         # Export constraints
-        
         import_cost_matrix = deepcopy(use_imported_list[T])
         for i in range(use_imported_list[T].shape[0]):
             for j in range(use_imported_list[T].shape[1]):
                 import_cost_matrix[i, j] = use_imported_list[T][i, j] * import_prices_list[T][i, 0]
-
         import_cost_list = deepcopy([import_cost_matrix])
         for i in range(planning_horizon - 1):
             cost_list = deepcopy(np.concatenate((import_cost_list[0], import_cost_matrix), axis=1))
             import_cost_list[0] = deepcopy(cost_list)
-
         augmented_import_cost_matrix = import_cost_list[0].sum(axis=0)
-
         export_value_list = []
         for i in range(time_steps):
             export_value_list.append(np.dot(export_prices_list[i].reshape([1,-1]), export_vector_list[i]))
