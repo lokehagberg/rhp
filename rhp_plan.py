@@ -74,6 +74,8 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             export_value_list.append(np.dot(export_prices_list[i].reshape([1,-1]), export_vector_list[i]))
 
         # Constructing DJ aggregated
+        non_exp_DJ_aggregated = concatenator(depreciation_list, supply_use_list, planning_horizon, T)
+        
         DJ_aggregated = np.vstack((concatenator(depreciation_list, supply_use_list, planning_horizon, T), 
                                    -augmented_import_cost_matrix))
         
@@ -83,7 +85,9 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             depreciated_target_output_list.append(
                 target_output_list[T + i + 1] + 
                 np.matmul(depreciation_list[T + i + 2], depreciated_target_output_list[i]))
-            
+        
+        non_exp_Dr_aggregated = stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0)
+        
         Dr_aggregated = np.concatenate((stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0), 
                                         -export_value_list[T]))
 
