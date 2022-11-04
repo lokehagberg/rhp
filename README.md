@@ -8,7 +8,7 @@ In the era of climate change, viable societies will have to rapidly adapt to ext
 
 The code in this repository implements a type of optimization procedure which we call *receding horizon planning* (RHP). It builds on ideas from optimization theory, economic analysis and control theory (cf. the works of Kantorovich, von Neumann, Bellman and Bertsekas). An introductory technical description is [provided here](rhp_intro.pdf).
 
-A first example with Swedish national accounts data is given [here](example.ipynb).
+A first example with Swedish national accounts data is given [here](https://github.com/lokehagberg/rhp/blob/main/simulations/Sweden/2016.ipynb).
 
 ## Python implementation
 
