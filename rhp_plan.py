@@ -89,7 +89,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         non_exp_Dr_aggregated = stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0)
         
         Dr_aggregated = np.concatenate((stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0), 
-                                        np.dot(import_prices_list[T],imported_target_output_list[T])-export_value_list[T]))
+                                        np.dot(imported_target_output_list[T],import_prices_list[T])-export_value_list[T]))
 
         # Constructing c aggregated
         c_aggregated = stack_vertical(primary_resource_list, planning_horizon - 1, T)
