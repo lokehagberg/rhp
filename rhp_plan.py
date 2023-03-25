@@ -50,7 +50,7 @@ def concatenator(depreciation_list, supply_use_list, planning_horizon, T):
 
 #Plan function
 def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, use_imported_list, depreciation_list, 
-         target_output_list, export_vector_list, export_prices_list, import_prices_list):
+         domestic_target_output_list, imported_target_output_list, export_vector_list, export_prices_list, import_prices_list):
     
     result_list, lagrange_list, slack_list = [], [], []
 
@@ -80,16 +80,16 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
                                    -augmented_import_cost_matrix))
         
         # Constructing Dr aggregated
-        depreciated_target_output_list = [target_output_list[T]]
+        depreciated_target_output_list = [domestic_target_output_list[T]]
         for i in range(planning_horizon - 1):
             depreciated_target_output_list.append(
-                target_output_list[T + i + 1] + 
+                domestic_target_output_list[T + i + 1] + 
                 np.matmul(depreciation_list[T + i + 2], depreciated_target_output_list[i]))
         
         non_exp_Dr_aggregated = stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0)
         
         Dr_aggregated = np.concatenate((stack_vertical(depreciated_target_output_list, planning_horizon - 1, 0), 
-                                        -export_value_list[T]))
+                                        np.dot(import_prices_list[T],imported_target_output_list[T])-export_value_list[T]))
 
         # Constructing c aggregated
         c_aggregated = stack_vertical(primary_resource_list, planning_horizon - 1, T)
