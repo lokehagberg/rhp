@@ -99,7 +99,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             Dr_vector = deepcopy(Dr_aggregated)
         else:
             DJ_matrix = deepcopy(non_exp_DJ_aggregated)
-            Dr_vector = deepcopt(non_exp_Dr_aggregated)
+            Dr_vector = deepcopy(non_exp_Dr_aggregated)
 
         # Plan
         result = optimize.linprog(c=c_aggregated, A_ub=-DJ_matrix, b_ub=-Dr_vector,
