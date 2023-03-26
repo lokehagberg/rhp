@@ -50,7 +50,7 @@ def concatenator(depreciation_list, supply_use_list, planning_horizon, T):
 
 #Plan function
 def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, use_imported_list, depreciation_list, 
-         domestic_target_output_list, imported_target_output_list, export_vector_list, export_prices_list, import_prices_list):
+         domestic_target_output_list, imported_target_output_list, export_constraint, export_vector_list, export_prices_list, import_prices_list):
     
     result_list, lagrange_list, slack_list = [], [], []
 
@@ -94,12 +94,19 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         # Constructing c aggregated
         c_aggregated = stack_vertical(primary_resource_list, planning_horizon - 1, T)
         
+        if export_constraint:
+            DJ_matrix = deepcopy(DJ_aggregated)
+            Dr_vector = deepcopy(Dr_aggregated)
+        else:
+            DJ_matrix = deepcopy(non_exp_DJ_aggregated)
+            Dr_vector = deepcopt(non_exp_Dr_aggregated)
+
         # Plan
-        result = optimize.linprog(c=c_aggregated, A_ub=-DJ_aggregated, b_ub=-Dr_aggregated,
+        result = optimize.linprog(c=c_aggregated, A_ub=-DJ_matrix, b_ub=-Dr_vector,
                                   bounds=(0, None), method='highs-ipm')
         print(result.success)
         print(result.status)
-        lagrange_ineq = -optimize.linprog(c=c_aggregated, A_ub=-DJ_aggregated, b_ub=-Dr_aggregated, bounds=(0, None),
+        lagrange_ineq = -optimize.linprog(c=c_aggregated, A_ub=-DJ_matrix, b_ub=-Dr_vector, bounds=(0, None),
                                           method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
