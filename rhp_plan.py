@@ -96,4 +96,4 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         lagrange_list.append(lagrange_ineq)
         slack_list.append(result.slack)
 
-    return([result_list, lagrange_list, slack_list])
+    return([result_list, lagrange_list, slack_list, aggregate_primary_resource_vector, aggregate_constraint_matrix, aggregate_constraint_vector])
