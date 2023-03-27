@@ -44,9 +44,10 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
 
         #Export constraint
         if export_constraint_boolean: 
-            
-            #Import prices list is a list of matrices (with only diagonal elements), TODO diagflat it
-            # export prices are a list of vectors however
+    
+            #Import prices list is a list of vectors, but it is converted to matrices where the
+            # diagonal takes on the vectors values and the other elements are 0
+            import_prices_list = deepcopy([np.diagflat(import_prices_list[i]) for i in range(len(import_prices_list))])
 
             #Constructing the use imports constraint matrix (each p_imp^T T)
             horizontal_block_list = []
