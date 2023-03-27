@@ -97,6 +97,8 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
         slack_list.append(result.slack)
+
+        #Production carry into the next time step
         if export_constraint_boolean:
             recent_slack = np.array_split(slack_list[N], planning_horizon+2)
             modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]))
