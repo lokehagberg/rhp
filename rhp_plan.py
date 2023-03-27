@@ -76,10 +76,11 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             imported_target_output_constraint_vector = np.vstack(vertical_block_list)
 
             #Constructing the export augmentet constraint objects
-            aggregate_constraint_matrix = deepcopy(np.vstack(aggregate_constraint_matrix, use_imports_constraint_matrix))
-            aggregate_constraint_matrix = deepcopy(np.hstack(aggregate_constraint_matrix, export_constraint_matrix))
-            aggregate_constraint_vector = deepcopy(np.vstack(aggregate_constraint_vector, imported_target_output_constraint_vector))
-            aggregate_primary_resource_vector = deepcopy(np.vstack(aggregate_primary_resource_vector, np.ones_like(imported_target_output_constraint_vector)))
+            aggregate_constraint_matrix = deepcopy(np.vstack([aggregate_constraint_matrix, use_imports_constraint_matrix]))
+            aggregate_constraint_matrix = deepcopy(np.hstack([aggregate_constraint_matrix, export_constraint_matrix]))
+            aggregate_constraint_vector = deepcopy(np.vstack([aggregate_constraint_vector, imported_target_output_constraint_vector]))
+            one_vector = np.ones_like(imported_target_output_constraint_vector)
+            aggregate_primary_resource_vector = deepcopy(np.vstack([aggregate_primary_resource_vector, one_vector]))
 
         # Plan
         result = optimize.linprog(c=aggregate_primary_resource_vector, 
