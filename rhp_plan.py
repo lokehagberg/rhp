@@ -10,6 +10,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
          export_constraint_boolean, export_prices_list, import_prices_list):
     
     result_list, lagrange_list, slack_list = [], [], []
+    modifier_value = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
 
     for N in range(time_steps):
 
@@ -29,9 +30,10 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
 
         #Constructing the aggregate constraint vector (each Dr)
         vertical_block_list = []
-        modifier = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
+        modifier = deepcopy(modifier_value)
         for i in range(planning_horizon+1):
-            vertical_block_list.append(full_domestic_target_output_list[N+i] + modifier)
+            vertical_block_list.append(np.add(full_domestic_target_output_list[N+i], modifier))
+            #depreciation and carry
             modifier = deepcopy(np.matmul(depreciation_list[N+i], 
                                           np.sum(vertical_block_list, axis=0)))
         aggregate_constraint_vector = np.vstack(vertical_block_list)
@@ -95,5 +97,11 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
         slack_list.append(result.slack)
+        if export_constraint_boolean:
+            recent_slack = np.array_split(slack_list[N], planning_horizon+2)
+            modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]))
+        else:
+            recent_slack = np.array_split(slack_list[N], planning_horizon+1)
+            modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]).reshape([-1,1]))
 
     return([result_list, lagrange_list, slack_list, aggregate_primary_resource_vector, aggregate_constraint_matrix, aggregate_constraint_vector])
