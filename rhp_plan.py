@@ -62,10 +62,10 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             #Constructing the export constraint matrix (each p_exp^T)
             horizontal_block_list = []
             for i in range(planning_horizon+1):
-                horizontal_block_list.append(np.transpose(export_prices_list[N+i]))
-            aggregate_export_prices = np.hstack(horizontal_block_list)
-            aggregate_export_price_matrix = np.diagflat(aggregate_export_prices)
-            zero_vector_list = [np.zeros_like(aggregate_export_prices)]*(planning_horizon+1)*(supply_use_list[0].shape[0])
+                export_price_diagonal = deepcopy(np.transpose(export_prices_list[N+i]))
+                horizontal_block_list.append(np.diagflat(export_price_diagonal))
+            aggregate_export_price_matrix = np.hstack(horizontal_block_list)
+            zero_vector_list = [np.zeros_like(aggregate_export_price_matrix[0])]*(aggregate_constraint_matrix.shape[0] + use_imports_constraint_matrix.shape[0] - aggregate_export_price_matrix.shape[0])
             aggregate_zero_matrix = np.vstack(zero_vector_list)
             export_constraint_matrix = np.vstack([aggregate_zero_matrix, aggregate_export_price_matrix])
 
@@ -73,7 +73,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             vertical_block_list = []
             for i in range(planning_horizon+1):
                 vertical_block_list.append(np.matmul(import_prices_list[N+i], imported_target_output_list[N+i]))
-            imported_target_output_constraint_vector = np.vstack(vertical_block_list)
+            imported_target_output_constraint_vector = np.sum(vertical_block_list)
 
             #Constructing the export augmentet constraint objects
             aggregate_constraint_matrix = deepcopy(np.vstack([aggregate_constraint_matrix, use_imports_constraint_matrix]))
