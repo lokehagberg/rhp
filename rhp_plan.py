@@ -32,7 +32,8 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         modifier = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
         for i in range(planning_horizon+1):
             vertical_block_list.append(full_domestic_target_output_list[T+i] + modifier)
-            modifier = deepcopy(np.matmul(depreciation_list[T+i], np.sum(vertical_block_list, axis=0)))
+            modifier = deepcopy(np.matmul(depreciation_list[T+i], 
+                                          np.sum(vertical_block_list, axis=0)))
         aggregate_constraint_vector = np.vstack(vertical_block_list)
 
         #Constructing the aggregate primary resource vector (each c)
@@ -54,7 +55,8 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         print(result.status)
         lagrange_ineq = -optimize.linprog(c=aggregate_primary_resource_vector, 
                                           A_ub=-aggregate_constraint_matrix, 
-                                          b_ub=-aggregate_constraint_vector, bounds=(0, None),
+                                          b_ub=-aggregate_constraint_vector, 
+                                          bounds=(0, None), 
                                           method='highs-ipm')['ineqlin']['marginals']
 
         result_list.append(result.x)
