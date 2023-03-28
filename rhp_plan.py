@@ -80,7 +80,9 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             aggregate_constraint_matrix = deepcopy(np.vstack([aggregate_constraint_matrix, use_imports_constraint_matrix]))
             aggregate_constraint_matrix = deepcopy(np.hstack([aggregate_constraint_matrix, export_constraint_matrix]))
             aggregate_constraint_vector = deepcopy(np.vstack([aggregate_constraint_vector, imported_target_output_constraint_vector]))
-            one_vector = np.array([1]*(aggregate_constraint_matrix.shape[1]-aggregate_primary_resource_vector[0]))
+            #TODO fix one vector shape issue
+            ones_length = aggregate_primary_resource_vector.shape[0]
+            one_vector = deepcopy(np.matrix(np.ones((ones_length, 1))))
             aggregate_primary_resource_vector = deepcopy(np.vstack([aggregate_primary_resource_vector, one_vector]))
 
         # Plan
