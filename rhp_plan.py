@@ -10,6 +10,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
          export_constraint_boolean, export_prices_list, import_prices_list):
     
     result_list, lagrange_list, slack_list = [], [], []
+    modifier_value = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
 
     for N in range(time_steps):
 
@@ -29,9 +30,10 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
 
         #Constructing the aggregate constraint vector (each Dr)
         vertical_block_list = []
-        modifier = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
+        modifier = deepcopy(-modifier_value)
         for i in range(planning_horizon+1):
-            vertical_block_list.append(full_domestic_target_output_list[N+i] + modifier)
+            vertical_block_list.append(np.sum([full_domestic_target_output_list[N+i], modifier], axis=0))
+            #depreciation and carry
             modifier = deepcopy(np.matmul(depreciation_list[N+i], 
                                           np.sum(vertical_block_list, axis=0)))
         aggregate_constraint_vector = np.vstack(vertical_block_list)
@@ -60,24 +62,25 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             #Constructing the export constraint matrix (each p_exp^T)
             horizontal_block_list = []
             for i in range(planning_horizon+1):
-                horizontal_block_list.append(np.transpose(export_prices_list[N+i]))
-            aggregate_export_prices = np.hstack(horizontal_block_list)
-            aggregate_export_price_matrix = np.diagflat(aggregate_export_prices)
-            zero_vector_list = [np.zeros_like(aggregate_export_prices)]*(planning_horizon+1)*(supply_use_list[0].shape[0])
-            aggregate_zero_matrix = np.vstack(zero_vector_list)
+                export_price_diagonal = deepcopy(np.transpose(export_prices_list[N+i]))
+                horizontal_block_list.append(np.diagflat(export_price_diagonal))
+            aggregate_export_price_matrix = np.hstack(horizontal_block_list)
+            zero_like = np.zeros_like(aggregate_export_price_matrix)
+            aggregate_zero_matrix = np.tile(zero_like, (planning_horizon+1,1))
             export_constraint_matrix = np.vstack([aggregate_zero_matrix, aggregate_export_price_matrix])
 
             #Constructing the directly imported target output constraint vector (p_imp^T r_imp)
             vertical_block_list = []
             for i in range(planning_horizon+1):
                 vertical_block_list.append(np.matmul(import_prices_list[N+i], imported_target_output_list[N+i]))
-            imported_target_output_constraint_vector = np.vstack(vertical_block_list)
+            imported_target_output_constraint_vector = np.sum(vertical_block_list, axis=0)
 
             #Constructing the export augmentet constraint objects
-            aggregate_constraint_matrix = deepcopy(np.vstack(aggregate_constraint_matrix, use_imports_constraint_matrix))
-            aggregate_constraint_matrix = deepcopy(np.hstack(aggregate_constraint_matrix, export_constraint_matrix))
-            aggregate_constraint_vector = deepcopy(np.vstack(aggregate_constraint_vector, imported_target_output_constraint_vector))
-            aggregate_primary_resource_vector = deepcopy(np.vstack(aggregate_primary_resource_vector, np.ones_like(imported_target_output_constraint_vector)))
+            aggregate_constraint_matrix = deepcopy(np.vstack([aggregate_constraint_matrix, use_imports_constraint_matrix]))
+            aggregate_constraint_matrix = deepcopy(np.hstack([aggregate_constraint_matrix, export_constraint_matrix]))
+            aggregate_constraint_vector = deepcopy(np.vstack([aggregate_constraint_vector, imported_target_output_constraint_vector]))
+            one_vector = np.ones_like(imported_target_output_constraint_vector)
+            aggregate_primary_resource_vector = deepcopy(np.vstack([aggregate_primary_resource_vector, one_vector]))
 
         # Plan
         result = optimize.linprog(c=aggregate_primary_resource_vector, 
@@ -95,5 +98,13 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
         slack_list.append(result.slack)
+
+        #Production carry into the next time step
+        if export_constraint_boolean:
+            recent_slack = deepcopy(np.array_split(slack_list[N], (planning_horizon+1)*2))
+            modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]))
+        else:
+            recent_slack = deepcopy(np.array_split(slack_list[N], planning_horizon+1))
+            modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]).reshape([-1,1]))
 
     return([result_list, lagrange_list, slack_list, aggregate_primary_resource_vector, aggregate_constraint_matrix, aggregate_constraint_vector])
