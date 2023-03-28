@@ -30,9 +30,9 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
 
         #Constructing the aggregate constraint vector (each Dr)
         vertical_block_list = []
-        modifier = deepcopy(modifier_value)
+        modifier = deepcopy(-modifier_value)
         for i in range(planning_horizon+1):
-            vertical_block_list.append(full_domestic_target_output_list[N+i] - modifier)
+            vertical_block_list.append(np.sum([full_domestic_target_output_list[N+i], modifier], axis=0))
             #depreciation and carry
             modifier = deepcopy(np.matmul(depreciation_list[N+i], 
                                           np.sum(vertical_block_list, axis=0)))
@@ -101,7 +101,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
 
         #Production carry into the next time step
         if export_constraint_boolean:
-            recent_slack = deepcopy(np.array_split(slack_list[N], planning_horizon+2))
+            recent_slack = deepcopy(np.array_split(slack_list[N], (planning_horizon+1)*2))
             modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]))
         else:
             recent_slack = deepcopy(np.array_split(slack_list[N], planning_horizon+1))
