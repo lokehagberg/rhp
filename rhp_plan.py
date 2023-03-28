@@ -7,10 +7,16 @@ from scipy import optimize
 #Plan function; full designates including exports
 def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, use_imported_list, 
          depreciation_list, full_domestic_target_output_list, imported_target_output_list, 
-         export_constraint_boolean, export_prices_list, import_prices_list):
+         export_constraint_boolean, export_prices_list, import_prices_list, upper_bound_on_activity,
+         max_iterations, tolerance):
     
     result_list, lagrange_list, slack_list = [], [], []
     modifier_value = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
+
+    if export_constraint_boolean:
+        #Import prices list is a list of vectors, but it is converted to matrices where the
+        # diagonal takes on the vectors values and the other elements are 0
+        import_prices_list = deepcopy([np.diagflat(import_prices_list[i]) for i in range(len(import_prices_list))])
 
     for N in range(time_steps):
 
@@ -47,10 +53,6 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         #Export constraint
         if export_constraint_boolean: 
     
-            #Import prices list is a list of vectors, but it is converted to matrices where the
-            # diagonal takes on the vectors values and the other elements are 0
-            import_prices_list = deepcopy([np.diagflat(import_prices_list[i]) for i in range(len(import_prices_list))])
-
             #Constructing the use imports constraint matrix (each p_imp^T T)
             horizontal_block_list = []
             for i in range(planning_horizon+1):
@@ -79,21 +81,22 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
             aggregate_constraint_matrix = deepcopy(np.vstack([aggregate_constraint_matrix, use_imports_constraint_matrix]))
             aggregate_constraint_matrix = deepcopy(np.hstack([aggregate_constraint_matrix, export_constraint_matrix]))
             aggregate_constraint_vector = deepcopy(np.vstack([aggregate_constraint_vector, imported_target_output_constraint_vector]))
-            one_vector = np.ones_like(imported_target_output_constraint_vector)
+            ones_length = aggregate_primary_resource_vector.shape[0]
+            one_vector = deepcopy(np.matrix(np.ones((ones_length, 1))))
             aggregate_primary_resource_vector = deepcopy(np.vstack([aggregate_primary_resource_vector, one_vector]))
 
         # Plan
         result = optimize.linprog(c=aggregate_primary_resource_vector, 
                                   A_ub=-aggregate_constraint_matrix, 
-                                  b_ub=-aggregate_constraint_vector,
-                                  bounds=(0, None), method='highs-ipm')
+                                  b_ub=-aggregate_constraint_vector, options = {'maxiter': max_iterations, 'tol': tolerance},
+                                  bounds=(0, upper_bound_on_activity), method='highs')
         print(result.success)
         print(result.status)
         lagrange_ineq = -optimize.linprog(c=aggregate_primary_resource_vector, 
                                           A_ub=-aggregate_constraint_matrix, 
                                           b_ub=-aggregate_constraint_vector, 
-                                          bounds=(0, None), 
-                                          method='highs-ipm')['ineqlin']['marginals']
+                                          bounds=(0, upper_bound_on_activity), options = {'maxiter': 1000, 'tol': 1e-8}, 
+                                          method='highs')['ineqlin']['marginals']
 
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
@@ -101,8 +104,9 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
 
         #Production carry into the next time step
         if export_constraint_boolean:
-            recent_slack = deepcopy(np.array_split(slack_list[N], (planning_horizon+1)*2))
-            modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]))
+            #TODO fix issue here
+            recent_slack = deepcopy(np.array_split(slack_list[N], (planning_horizon+2)))
+            modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]).reshape([-1,1]))
         else:
             recent_slack = deepcopy(np.array_split(slack_list[N], planning_horizon+1))
             modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]).reshape([-1,1]))
