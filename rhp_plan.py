@@ -43,8 +43,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         for i in range(planning_horizon+1):
             vertical_block_list.append(np.sum([full_domestic_target_output_list[N+i], modifier], axis=0))
             #depreciation and carry
-            modifier = deepcopy(np.matmul(depreciation_list[N+i], 
-                                          np.sum(vertical_block_list, axis=0)))
+            modifier = deepcopy(np.matmul(depreciation_list[N+i], vertical_block_list[-1]))
         aggregate_constraint_vector = np.vstack(vertical_block_list)
 
         #Constructing the aggregate primary resource vector (each c)
