@@ -16,21 +16,24 @@ The goal is to coordinate $m$ units of production, so that their production leve
 
 ### Variables
 
-| TeX paper | Code                         | Description                                           | Type & length                                  |
-| --------- | ---------------------------- | ----------------------------------------------------- | ---------------------------------------------- |
-| $n$       | time_steps                   | simulated time steps                                  | non-negative integer & 1                       |
-| $N$       | planning_horizon             | planning horizon                                      | non-negative integer & 1                       |
-| $B$       | augmented_supply_list        | supply list in price unit per time unit               | list, each item in the list numpy.matrix & n*m |
-| $A$       | augmented_use_domestic_list  | use domestic list in product price unit per time unit | list, each item in the list numpy.matrix & n*m |
-| $T$       | augmented_use_imported_list  | use imported list in product price unit per time unit | list, each item in the list numpy.matrix & n*m |
-| $D$       | depreciation_matrix_list     | depreciation matrix list                              | list, each item in the list numpy.matrix & n*n |
-| $r$       | augmented_target_output_list | target output vector in product price unit            | list, each item in the list numpy.matrix & n*1 |
-| $r_{exp}$ | augmented_export_vector_list | export vector in product price unit                   | list, each item in the list numpy.matrix & m*1 |
-| $p_{exp}$| export_prices_list           | export prices list                                    | list, each item in the list numpy.matrix & m*1 |
-| $p_{imp}$| import_prices_list           | import prices list                                    | list, each item in the list numpy.matrix & m*1 |
-|           | sector_name                  | ingoing product names                                 | list, each item in the list string & m         |
-|           | sector_with_all_outputs      | outgoing product names                                | list, each item in the list string & n         |
-|           | worked_hours                 | actual worked hours for the period                    | numpy.matrix & m                                |
+Note: full implies that exports are included, they are otherwise omitted from the target output in question. 
+
+| TeX paper | Code                             | Description                                           | Type & length                                  |
+| --------- | -------------------------------- | ----------------------------------------------------- | ---------------------------------------------- |
+| $n$       | time_steps                       | simulated time steps                                  | non-negative integer & 1                       |
+| $N$       | planning_horizon                 | planning horizon                                      | non-negative integer & 1                       |
+| $c$       | primary_resource_list            | it might be worked hours or co2 for example           | list, each item in the list numpy.matrix & n*1 |
+| $J$       | supply_use_list                  | supply minus use list in price unit                   | list, each item in the list numpy.matrix & n*m |
+| $T$       | use_imported_list                | use imported list in product price unit               | list, each item in the list numpy.matrix & n*m |
+| $D$       | depreciation_matrix_list         | depreciation matrix list                              | list, each item in the list numpy.matrix & n*n |
+| $r$       | full_domestic_target_output_list | domestic production target in product price units     | list, each item in the list numpy.matrix & n*1 |
+|           | export_constraint_boolean        | a boolean being true if the export constraint is used | boolean                                        |
+| $r_{exp}$ | augmented_export_vector_list     | export vector in product price unit                   | list, each item in the list numpy.matrix & m*1 |
+| $p_{exp}$ | export_prices_list               | export prices list                                    | list, each item in the list numpy.matrix & m*1 |
+|           | upper_bound_on_activity          | sets an upper bound on activity                       | None or int                                    |
+|           | max_iterations                   | sets an upper bound on iteration number               | int                                            |
+|           | tolerance                        | sets a tolerance for what constitutes a solution      | int                                            |
+
 
 
 
