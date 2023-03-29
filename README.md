@@ -30,6 +30,7 @@ Note: full implies that exports are included, they are otherwise omitted from th
 |           | export_constraint_boolean        | a boolean being true if the export constraint is used | boolean                                        |
 | $r_{exp}$ | augmented_export_vector_list     | export vector in product price unit                   | list, each item in the list numpy.matrix & m*1 |
 | $p_{exp}$ | export_prices_list               | export prices list                                    | list, each item in the list numpy.matrix & m*1 |
+| $p_{imp}$ | import_prices_list               | import prices list                                    | list, each item in the list numpy.matrix & m*1 |
 |           | upper_bound_on_activity          | sets an upper bound on activity                       | None or int                                    |
 |           | max_iterations                   | sets an upper bound on iteration number               | int                                            |
 |           | tolerance                        | sets a tolerance for what constitutes a solution      | int                                            |
