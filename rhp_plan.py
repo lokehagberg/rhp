@@ -11,6 +11,9 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
          max_iterations, tolerance):
     
     result_list, lagrange_list, slack_list = [], [], []
+    aggregate_constraint_matrix_final_list = []
+    aggregate_constraint_vector_final_list = []
+    aggregate_primary_resource_final_list = []
     modifier_value = deepcopy(np.zeros_like(full_domestic_target_output_list[0]))
 
     if export_constraint_boolean:
@@ -101,14 +104,16 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         result_list.append(result.x)
         lagrange_list.append(lagrange_ineq)
         slack_list.append(result.slack)
+        aggregate_constraint_matrix_final_list.append(aggregate_constraint_matrix)
+        aggregate_constraint_vector_final_list.append(aggregate_constraint_vector)
+        aggregate_primary_resource_final_list.append(aggregate_primary_resource_vector)
 
         #Production carry into the next time step
         if export_constraint_boolean:
-            #TODO fix issue here
             recent_slack = deepcopy(np.array_split(slack_list[N], (planning_horizon+2)))
             modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]).reshape([-1,1]))
         else:
             recent_slack = deepcopy(np.array_split(slack_list[N], planning_horizon+1))
             modifier_value = deepcopy(np.matmul(depreciation_list[N], recent_slack[0]).reshape([-1,1]))
 
-    return([result_list, lagrange_list, slack_list, aggregate_primary_resource_vector, aggregate_constraint_matrix, aggregate_constraint_vector])
+    return([result_list, lagrange_list, slack_list, aggregate_primary_resource_final_list, aggregate_constraint_matrix_final_list, aggregate_constraint_vector_final_list])
