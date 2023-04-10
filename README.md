@@ -20,7 +20,7 @@ Note: full implies that exports are included, they are otherwise omitted from th
 
 | TeX paper | Code                             | Description                                           | Type & length                                  |
 | --------- | -------------------------------- | ----------------------------------------------------- | ---------------------------------------------- |
-| $n$       | time_steps                       | simulated time steps                                  | non-negative integer & 1                       |
+| $T$       | time_steps                       | simulated time steps                                  | non-negative integer & 1                       |
 | $N$       | planning_horizon                 | planning horizon                                      | non-negative integer & 1                       |
 | $c$       | primary_resource_list            | it might be worked hours or co2 for example           | list, each item in the list numpy.matrix & n*1 |
 | $J$       | supply_use_list                  | supply minus use list in price unit                   | list, each item in the list numpy.matrix & n*m |
