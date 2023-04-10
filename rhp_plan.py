@@ -55,7 +55,7 @@ def plan(time_steps, planning_horizon, primary_resource_list, supply_use_list, u
         #Export constraint
         if export_constraint_boolean: 
     
-            #Constructing the use imports constraint matrix (each p_imp^T T)
+            #Constructing the use imports constraint matrix (each p_imp^T T-bar)
             horizontal_block_list = []
             for i in range(planning_horizon+1):
                 price_augmented_use_imports = deepcopy(np.matmul(import_prices_list[N+i], 
